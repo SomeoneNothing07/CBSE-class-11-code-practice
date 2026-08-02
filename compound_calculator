@@ -1,0 +1,264 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp } from 'lucide-react';
+
+interface CalculationData {
+  month: number;
+  contributions: number;
+  growth: number;
+  total: number;
+}
+
+export function CompoundInterestCalculator() {
+  const [initialAmount, setInitialAmount] = useState<number>(10000);
+  const [monthlyContribution, setMonthlyContribution] = useState<number>(500);
+  const [annualRate, setAnnualRate] = useState<number>(7);
+  const [years, setYears] = useState<number>(20);
+
+  const chartData = useMemo(() => {
+    const data: CalculationData[] = [];
+    const monthlyRate = annualRate / 100 / 12;
+    let balance = initialAmount;
+    let totalContributions = initialAmount;
+
+    for (let month = 0; month <= years * 12; month++) {
+      const growth = balance - totalContributions;
+      data.push({
+        month,
+        contributions: Math.round(totalContributions),
+        growth: Math.round(Math.max(0, growth)),
+        total: Math.round(balance),
+      });
+
+      balance = balance * (1 + monthlyRate) + monthlyContribution;
+      totalContributions += monthlyContribution;
+    }
+
+    return data;
+  }, [initialAmount, monthlyContribution, annualRate, years]);
+
+  const finalData = chartData[chartData.length - 1];
+  const totalContributed = initialAmount + monthlyContribution * years * 12;
+  const totalGain = finalData.total - totalContributed;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  return (
+    <div className="w-full max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <TrendingUp className="w-8 h-8 text-primary" />
+          <h1 className="text-4xl font-bold text-foreground">Compound Interest Calculator</h1>
+        </div>
+        <p className="text-muted-foreground">See how your investments grow over time</p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        {/* Input Section */}
+        <div className="md:col-span-1 bg-card rounded-lg p-6 border border-border">
+          <h2 className="text-lg font-semibold text-foreground mb-6">Investment Details</h2>
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Initial Investment
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-semibold">$</span>
+                <input
+                  type="number"
+                  value={initialAmount}
+                  onChange={(e) => setInitialAmount(Math.max(0, Number(e.target.value)))}
+                  className="flex-1 px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100000"
+                step="1000"
+                value={initialAmount}
+                onChange={(e) => setInitialAmount(Number(e.target.value))}
+                className="w-full mt-2 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Monthly Contribution
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-semibold">$</span>
+                <input
+                  type="number"
+                  value={monthlyContribution}
+                  onChange={(e) => setMonthlyContribution(Math.max(0, Number(e.target.value)))}
+                  className="flex-1 px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="5000"
+                step="50"
+                value={monthlyContribution}
+                onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+                className="w-full mt-2 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Annual Interest Rate
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={annualRate}
+                  onChange={(e) => setAnnualRate(Math.max(0, Number(e.target.value)))}
+                  className="flex-1 px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  step="0.1"
+                />
+                <span className="text-foreground font-semibold">%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="15"
+                step="0.1"
+                value={annualRate}
+                onChange={(e) => setAnnualRate(Number(e.target.value))}
+                className="w-full mt-2 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Time Period
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={years}
+                  onChange={(e) => setYears(Math.max(1, Number(e.target.value)))}
+                  className="flex-1 px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <span className="text-foreground font-semibold">Years</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="50"
+                step="1"
+                value={years}
+                onChange={(e) => setYears(Number(e.target.value))}
+                className="w-full mt-2 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Results Section */}
+        <div className="md:col-span-2 space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-primary text-primary-foreground rounded-lg p-6">
+              <p className="text-sm font-medium opacity-90">Final Amount</p>
+              <p className="text-3xl font-bold mt-2">{formatCurrency(finalData.total)}</p>
+              <p className="text-xs opacity-75 mt-2">After {years} years</p>
+            </div>
+
+            <div className="bg-secondary text-secondary-foreground rounded-lg p-6">
+              <p className="text-sm font-medium opacity-90">Total Gain</p>
+              <p className="text-3xl font-bold mt-2 text-green-600">{formatCurrency(totalGain)}</p>
+              <p className="text-xs opacity-75 mt-2">
+                {((totalGain / (totalContributed || 1)) * 100).toFixed(1)}% return
+              </p>
+            </div>
+
+            <div className="bg-card border border-border rounded-lg p-6">
+              <p className="text-sm font-medium text-foreground">Total Contributions</p>
+              <p className="text-2xl font-bold mt-2 text-foreground">{formatCurrency(totalContributed)}</p>
+              <p className="text-xs text-muted-foreground mt-2">Invested amount</p>
+            </div>
+
+            <div className="bg-card border border-border rounded-lg p-6">
+              <p className="text-sm font-medium text-foreground">Interest Earned</p>
+              <p className="text-2xl font-bold mt-2 text-primary">{formatCurrency(totalGain)}</p>
+              <p className="text-xs text-muted-foreground mt-2">Passive income</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Growth Over Time</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis 
+                dataKey="month" 
+                stroke="var(--color-muted-foreground)"
+                label={{ value: 'Months', position: 'insideBottomRight', offset: -5 }}
+              />
+              <YAxis 
+                stroke="var(--color-muted-foreground)"
+                label={{ value: 'Amount ($)', angle: -90, position: 'insideLeft' }}
+              />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'var(--color-card)', border: '1px solid var(--color-border)' }}
+                formatter={(value) => formatCurrency(value as number)}
+                labelFormatter={(label) => `Month ${label}`}
+              />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="total" 
+                stroke="var(--color-primary)" 
+                strokeWidth={3}
+                dot={false}
+                name="Total Value"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Contributions vs Growth</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData.filter((_, i) => i % Math.ceil(chartData.length / 12) === 0)}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis 
+                dataKey="month" 
+                stroke="var(--color-muted-foreground)"
+                label={{ value: 'Months', position: 'insideBottomRight', offset: -5 }}
+              />
+              <YAxis 
+                stroke="var(--color-muted-foreground)"
+                label={{ value: 'Amount ($)', angle: -90, position: 'insideLeft' }}
+              />
+              <Tooltip 
+                contentStyle={{ backgroundColor: 'var(--color-card)', border: '1px solid var(--color-border)' }}
+                formatter={(value) => formatCurrency(value as number)}
+                labelFormatter={(label) => `Month ${label}`}
+              />
+              <Legend />
+              <Bar dataKey="contributions" fill="var(--color-secondary)" name="Contributions" />
+              <Bar dataKey="growth" fill="var(--color-primary)" name="Growth" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
